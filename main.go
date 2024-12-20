@@ -1,24 +1,22 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
+	"context"
+	"log/slog"
 	"os"
+	"os/signal"
+
+	"github.com/sushil-cmd-r/orders-api/application"
 )
 
 func main() {
-	server := &http.Server{
-		Addr:    ":8080",
-		Handler: http.HandlerFunc(check),
-	}
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-	fmt.Println("starting server...")
-	if err := server.ListenAndServe(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-}
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
 
-func check(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("OK"))
+	app := application.New(logger)
+	if err := app.Start(ctx); err != nil {
+		logger.Error("failed to start application", "error", err)
+	}
 }
