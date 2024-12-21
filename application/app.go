@@ -2,14 +2,19 @@ package application
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/sushil-cmd-r/orders-api/db"
 )
 
 type App struct {
 	logger *slog.Logger
 	router http.Handler
+	db     *db.DB
+	cfg    config
 }
 
 func New(logger *slog.Logger) *App {
@@ -17,17 +22,24 @@ func New(logger *slog.Logger) *App {
 }
 
 func (a *App) Start(ctx context.Context) error {
-	a.loadRoutes()
+	if err := a.loadConfig(); err != nil {
+		return fmt.Errorf("failed to load config: %v", err)
+	}
 
+	if err := a.connectToDB(); err != nil {
+		return fmt.Errorf("failed to connect to database: %v", err)
+	}
+
+	a.loadRoutes()
 	server := &http.Server{
-		Addr:    ":8080",
+		Addr:    fmt.Sprintf(":%d", a.cfg.Port),
 		Handler: a.router,
 	}
 
 	done := make(chan error, 1)
 	go func() {
 		defer close(done)
-		a.logger.Info("starting server", "port", 8080)
+		a.logger.Info("starting server", "port", a.cfg.Port)
 		done <- server.ListenAndServe()
 	}()
 
@@ -40,4 +52,14 @@ func (a *App) Start(ctx context.Context) error {
 		defer cancel()
 		return server.Shutdown(timeout)
 	}
+}
+
+func (a *App) connectToDB() error {
+	db, err := db.Connect(a.cfg.DBUrl)
+	if err != nil {
+		return err
+	}
+
+	a.db = db
+	return nil
 }
