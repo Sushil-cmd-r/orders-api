@@ -98,6 +98,23 @@ func (s *orderStore) Insert(ctx context.Context, order *model.Order) error {
 }
 
 func (s *orderStore) UpdateById(ctx context.Context, id int64, order *model.Order) error {
+	tx, err := s.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("delete error: %w", err)
+	}
+
+	defer tx.Rollback()
+
+	q := `UPDATE orders SET shipped_at = $1, completed_at = $2  WHERE id = $3;`
+
+	_, err = tx.ExecContext(ctx, q, order.ShippedAt, order.CompletedAt, order.Id)
+	if err != nil {
+		return fmt.Errorf("update error: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("update error: %w", err)
+	}
 	return nil
 }
 
