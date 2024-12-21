@@ -23,6 +23,10 @@ func Connect(dsn string) (*DB, error) {
 	return &DB{conn: conn}, nil
 }
 
+func (db *DB) Conn() *sql.DB {
+	return db.conn
+}
+
 func (db *DB) Close() {
 	db.conn.Close()
 }
