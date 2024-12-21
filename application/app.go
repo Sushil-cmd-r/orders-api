@@ -8,12 +8,14 @@ import (
 	"time"
 
 	"github.com/sushil-cmd-r/orders-api/db"
+	"github.com/sushil-cmd-r/orders-api/store"
 )
 
 type App struct {
 	logger *slog.Logger
 	router http.Handler
 	db     *db.DB
+	store  *store.Store
 	cfg    config
 }
 
@@ -30,6 +32,7 @@ func (a *App) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to connect to database: %v", err)
 	}
 
+	a.store = store.Init()
 	a.loadRoutes()
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", a.cfg.Port),
