@@ -53,6 +53,7 @@ func (s *orderStore) SelectById(ctx context.Context, id int64) (*model.Order, er
 	}
 
 	order.LineItems = lineItems
+	tx.Commit()
 	return &order, nil
 }
 
@@ -86,11 +87,11 @@ func (s *orderStore) Insert(ctx context.Context, order *model.Order) error {
 
 	_, err = tx.Exec(q2, vals...)
 	if err != nil {
-		return fmt.Errorf("failed insert: %w", err)
+		return fmt.Errorf("insert error: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit: %w", err)
+		return fmt.Errorf("insert error: %w", err)
 	}
 
 	return nil
