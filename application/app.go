@@ -32,7 +32,7 @@ func (a *App) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to connect to database: %v", err)
 	}
 
-	a.store = store.Init()
+	a.store = store.Init(a.db)
 	a.loadRoutes()
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", a.cfg.Port),
