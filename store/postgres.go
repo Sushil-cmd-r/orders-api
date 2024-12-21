@@ -15,8 +15,50 @@ type orderStore struct {
 	conn *sql.DB
 }
 
-func (s *orderStore) Select(ctx context.Context) ([]model.Order, error) {
-	return nil, nil
+func (s *orderStore) Select(ctx context.Context) ([]*model.Order, error) {
+	tx, err := s.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("select error: %w", err)
+	}
+
+	defer tx.Rollback()
+
+	var orders []*model.Order
+	q1 := `SELECT id, customer_id, created_at, shipped_at, completed_at FROM orders;`
+	rows, err := tx.QueryContext(ctx, q1)
+	if err != nil {
+		return nil, fmt.Errorf("select error: %w", err)
+	}
+
+	for rows.Next() {
+		var order model.Order
+		if err := rows.Scan(&order.Id, &order.CustomerId, &order.CreatedAt, &order.ShippedAt, &order.CompletedAt); err != nil {
+			return nil, fmt.Errorf("select error: %w", err)
+		}
+		orders = append(orders, &order)
+	}
+
+	q2 := `SELECT item_id, price, quantity FROM line_items WHERE order_id = $1;`
+	for _, order := range orders {
+		id := order.Id
+		rows, err := tx.QueryContext(ctx, q2, id)
+		if err != nil {
+			return nil, fmt.Errorf("select error: %w", err)
+		}
+
+		order.LineItems = make([]model.LineItem, 0)
+		for rows.Next() {
+			var lineItem model.LineItem
+			if err := rows.Scan(&lineItem.ItemId, &lineItem.Price, &lineItem.Quantity); err != nil {
+				return nil, fmt.Errorf("select error: %w", err)
+			}
+			order.LineItems = append(order.LineItems, lineItem)
+
+		}
+	}
+	tx.Commit()
+
+	return orders, nil
 }
 
 func (s *orderStore) SelectById(ctx context.Context, id int64) (*model.Order, error) {

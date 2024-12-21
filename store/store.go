@@ -9,7 +9,7 @@ import (
 
 type Store struct {
 	Orders interface {
-		Select(ctx context.Context) ([]model.Order, error)
+		Select(ctx context.Context) ([]*model.Order, error)
 		SelectById(ctx context.Context, id int64) (*model.Order, error)
 		Insert(ctx context.Context, order *model.Order) error
 		UpdateById(ctx context.Context, id int64, order *model.Order) error

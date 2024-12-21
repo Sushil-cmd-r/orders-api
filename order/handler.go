@@ -48,6 +48,22 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("list orders")
+	orders, err := h.Store.Orders.Select(r.Context())
+	if err != nil {
+		h.Logger.Error("select order", "error", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	data, err := json.Marshal(orders)
+	if err != nil {
+		h.Logger.Error("select order", "error", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(data)
 }
 
 func (h *Handler) GetById(w http.ResponseWriter, r *http.Request) {
