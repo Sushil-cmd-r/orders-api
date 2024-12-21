@@ -31,6 +31,7 @@ func (a *App) Start(ctx context.Context) error {
 	if err := a.connectToDB(); err != nil {
 		return fmt.Errorf("failed to connect to database: %v", err)
 	}
+	defer a.db.Close()
 
 	a.store = store.Init(a.db)
 	a.loadRoutes()
