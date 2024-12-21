@@ -87,4 +87,20 @@ func (h *Handler) UpdateById(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) DeleteById(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("delete order by id")
+	id := r.PathValue("id")
+
+	orderId, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		h.Logger.Error("invalid order id")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if err := h.Store.Orders.DeleteById(r.Context(), orderId); err != nil {
+		h.Logger.Error("delete order", "error", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

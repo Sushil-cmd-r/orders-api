@@ -101,5 +101,19 @@ func (s *orderStore) UpdateById(ctx context.Context, id int64, order *model.Orde
 }
 
 func (s *orderStore) DeleteById(ctx context.Context, id int64) error {
+	tx, err := s.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("delete error: %w", err)
+	}
+
+	defer tx.Rollback()
+
+	q := `DELETE FROM orders WHERE id = $1;`
+	_, err = tx.ExecContext(ctx, q, id)
+	if err != nil {
+		return fmt.Errorf("delete error: %w", err)
+	}
+	tx.Commit()
+
 	return nil
 }
